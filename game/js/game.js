@@ -387,6 +387,12 @@ export class Game {
       dtime = Math.sin(dtime) * Math.PI * 4;
       g.bubblemachine.resource.gravity = vector(50 * Math.sin(dtime), 10, 50 * Math.cos(dtime));
     }
+    if (g.tracknum === 3 && g.__bubbleFilm && g.__bubbleFilm.map) {
+      const t = g.milliSeconds() / 1000;
+      g.__bubbleFilm.map.offset.set(t * 0.07, Math.sin(t * 0.6) * 0.1);
+      g.__bubbleFilm.map.rotation = t * 0.35;
+      g.__bubbleFilm.map.center.set(0.5, 0.5);
+    }
   }
 
   // ======================= MC (player model) =======================
@@ -438,11 +444,27 @@ export class Game {
         const nsh = w.newShader('bubble');
         const ntx = w.newTexture('transcrome', '#fromCastMember', g.member('transcrome'));
         nsh.reflectionMap = ntx;
-        nsh.mat.reflectivity = 0.9;
-        nsh.diffuse = rgb(0, 110, 110);
-        nsh.emissive = rgb(70, 120, 120);
-        nsh.blend = 38; // soap-bubble: mostly see-through with chrome highlights
+        nsh.mat.reflectivity = 0.45;
+        nsh.diffuse = rgb(0, 90, 100);
+        nsh.emissive = rgb(35, 70, 80);
+        nsh.blend = 30; // glassy bubble
         nm.shaderList = nsh;
+        // animated soap-film: additive swirl shell just above the glass
+        {
+          const base = nm.o.children.find(c => c.isMesh);
+          if (base) {
+            const filmMat = new THREE.MeshBasicMaterial({
+              map: ntx.t.clone(), transparent: true, blending: THREE.AdditiveBlending,
+              depthWrite: false, opacity: 0.32
+            });
+            filmMat.map.needsUpdate = true;
+            filmMat.map.wrapS = filmMat.map.wrapT = THREE.RepeatWrapping;
+            const film = new THREE.Mesh(base.geometry, filmMat);
+            film.scale.setScalar(1.015);
+            nm.o.add(film);
+            g.__bubbleFilm = filmMat;
+          }
+        }
         g.m_Model = nm;
         g.addinker(nm);
         mc.addChild(nm, '#preserveWorld');
@@ -888,12 +910,16 @@ export class Game {
         const uv = swirl.geometry.attributes.uv;
         if (uv) {
           if (!swirl.__uv0) swirl.__uv0 = uv.array.slice();
+          // Rotate about the uv window's own lattice corner. Geometry v is flipped (1-v)
+          // at build time, so the window sits around (0,1) — pivot there, where the
+          // texture's vortex eye lives (measured ~0.03 off the corner).
+          const CX = 0, CY = 1;
           const ang = -(g.milliSeconds() / 4) * DEG;
           const ca = Math.cos(ang), sa = Math.sin(ang);
           const u0 = swirl.__uv0;
           for (let i = 0; i < uv.count; i++) {
-            const u = u0[i * 2], v = u0[i * 2 + 1];
-            uv.setXY(i, ca * u - sa * v, sa * u + ca * v);
+            const u = u0[i * 2] - CX, v = u0[i * 2 + 1] - CY;
+            uv.setXY(i, CX + ca * u - sa * v, CY + sa * u + ca * v);
           }
           uv.needsUpdate = true;
         }
