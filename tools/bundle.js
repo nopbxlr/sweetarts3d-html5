@@ -66,6 +66,7 @@ fs.mkdirSync(path.dirname(OUT), { recursive: true });
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Wonka SweeTarts 3D Game</title>
 <style>
   html,body { margin:0; padding:0; background:#1a1a1a; height:100%; }

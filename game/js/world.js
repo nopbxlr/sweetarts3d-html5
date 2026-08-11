@@ -143,9 +143,11 @@ export class World {
     if (this.overlayDiv) this.overlayDiv.innerHTML = '';
     this.groupNode = new Node(this, 'World Group', new THREE.Group());
     // default lights (Director: light[1] ambient-ish, light[2] directional)
-    // three r155+ physical lighting units: PI-scale so diffuse×light matches Director 1:1
-    this.ambient = new THREE.AmbientLight(0xffffff, Math.PI);
-    this.directional = new THREE.DirectionalLight(0xffffff, Math.PI);
+    // three r155+ physical lighting units: PI-scale so diffuse×light matches Director 1:1.
+    // Director's ambient light multiplies the shader's ambient property (~0.25 gray), not
+    // diffuse — scale it down accordingly or everything overexposes.
+    this.ambient = new THREE.AmbientLight(0xffffff, Math.PI * 0.25);
+    this.directional = new THREE.DirectionalLight(0xffffff, Math.PI * 0.92);
     this.directional.position.set(0, 1000, 1000);
     this.scene.add(this.ambient, this.directional);
     const self = this;

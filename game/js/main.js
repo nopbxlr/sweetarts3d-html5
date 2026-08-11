@@ -368,8 +368,9 @@ function setupScale(movie) {
   let mode = localStorage.getItem('st3d-scale') || 'fit';
   const apply = () => {
     let s;
-    if (mode === 'fit') s = Math.max(1, Math.min((window.innerWidth - 24) / STAGE_W, (window.innerHeight - 60) / STAGE_H));
+    if (mode === 'fit') s = Math.min((window.innerWidth - 24) / STAGE_W, (window.innerHeight - 60) / STAGE_H);
     else s = parseFloat(mode);
+    if (!(s > 0)) s = 1;
     s = Math.min(s, 3);
     window.__stageScale = s;
     wrap.style.width = (STAGE_W * s) + 'px';
@@ -413,11 +414,41 @@ function setupScale(movie) {
   apply(); paint();
 }
 
+// ---------------- touch controls ----------------
+function setupTouch(movie) {
+  if (!('ontouchstart' in window)) return;
+  const inp = movie.input;
+  const mk = (label, keys, css) => {
+    const b = document.createElement('div');
+    b.textContent = label;
+    b.style.cssText = 'position:fixed;z-index:60;width:64px;height:64px;border-radius:50%;' +
+      'background:rgba(62,198,220,0.25);border:2px solid rgba(62,198,220,0.6);color:#eafcff;' +
+      'display:flex;align-items:center;justify-content:center;font:bold 22px Verdana;' +
+      'user-select:none;-webkit-user-select:none;touch-action:none;' + css;
+    const down = (e) => { e.preventDefault(); for (const k of keys) inp.keys.add(k); b.style.background = 'rgba(62,198,220,0.55)'; };
+    const up = (e) => {
+      e.preventDefault();
+      for (const k of keys) { inp.keys.delete(k); inp.keyUpQueue.push(k); }
+      b.style.background = 'rgba(62,198,220,0.25)';
+    };
+    b.addEventListener('touchstart', down, { passive: false });
+    b.addEventListener('touchend', up, { passive: false });
+    b.addEventListener('touchcancel', up, { passive: false });
+    document.body.appendChild(b);
+  };
+  mk('\u25c0', [123], 'left:14px;bottom:52px;');
+  mk('\u25b6', [124], 'left:96px;bottom:52px;');
+  mk('GO', [126], 'right:96px;bottom:52px;font-size:16px;');
+  mk('\u2191', [' '], 'right:14px;bottom:118px;');
+  mk('\u25bc', [125], 'right:14px;bottom:8px;width:52px;height:38px;border-radius:10px;font-size:14px;');
+}
+
 loadAssets().then((assets) => {
   const ld = document.getElementById('loading');
   if (ld) ld.remove();
   const movie = new Movie(assets);
   window.movie = movie;
   setupScale(movie);
+  setupTouch(movie);
   movie.start();
 });

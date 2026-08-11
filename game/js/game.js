@@ -444,6 +444,7 @@ export class Game {
         nsh.blend = 38; // soap-bubble: mostly see-through with chrome highlights
         nm.shaderList = nsh;
         g.m_Model = nm;
+        g.addinker(nm);
         mc.addChild(nm, '#preserveWorld');
         mc.visibility = '#none';
         g.MCAnimStep = 1;
@@ -463,6 +464,19 @@ export class Game {
         g.MCAnimStep = 1;
         break;
       }
+    }
+  }
+
+  addinker(amodel) {
+    // Director inker modifier: white silhouette outline. Backface-expanded shell.
+    for (const c of [...amodel.o.children]) {
+      if (!c.isMesh) continue;
+      const outline = new THREE.Mesh(c.geometry, new THREE.MeshBasicMaterial({
+        color: 0xffffff, side: THREE.BackSide
+      }));
+      outline.scale.setScalar(1.07);
+      outline.renderOrder = (c.renderOrder || 0) - 1;
+      amodel.o.add(outline);
     }
   }
 
@@ -867,19 +881,22 @@ export class Game {
       }
     }
     if (g.exitavailable && g.exitavailable.shaderList) {
-      // spin the swirl quad itself about the portal center (Director rotated the texture;
-      // this is visually identical and stable)
+      // Director rotates texture UVs about the uv origin — do exactly that on the
+      // swirl quad's uv attribute (the vortex texel sits at uv 0,0 = quad center)
       const swirl = g.exitavailable.o.children.find(c => c.isMesh);
       if (swirl) {
-        if (!swirl.__swirlCenter) {
-          swirl.geometry.computeBoundingBox();
-          swirl.__swirlCenter = swirl.geometry.boundingBox.getCenter(new THREE.Vector3());
+        const uv = swirl.geometry.attributes.uv;
+        if (uv) {
+          if (!swirl.__uv0) swirl.__uv0 = uv.array.slice();
+          const ang = -(g.milliSeconds() / 4) * DEG;
+          const ca = Math.cos(ang), sa = Math.sin(ang);
+          const u0 = swirl.__uv0;
+          for (let i = 0; i < uv.count; i++) {
+            const u = u0[i * 2], v = u0[i * 2 + 1];
+            uv.setXY(i, ca * u - sa * v, sa * u + ca * v);
+          }
+          uv.needsUpdate = true;
         }
-        const C = swirl.__swirlCenter;
-        const ang = -(g.milliSeconds() / 4) * DEG;
-        const rc = C.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), ang);
-        swirl.position.set(C.x - rc.x, C.y - rc.y, C.z - rc.z);
-        swirl.rotation.z = ang;
       }
       if (g.exitavailable.getWorldTransform().position.distanceTo(g.mc.getWorldTransform().position) < 45) {
         g.exitlevel();
