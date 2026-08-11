@@ -867,8 +867,20 @@ export class Game {
       }
     }
     if (g.exitavailable && g.exitavailable.shaderList) {
-      const s = g.exitavailable.shaderList[1];
-      if (s) s.textureTransform.rotation = vector(0, 0, g.milliSeconds() / 4);
+      // spin the swirl quad itself about the portal center (Director rotated the texture;
+      // this is visually identical and stable)
+      const swirl = g.exitavailable.o.children.find(c => c.isMesh);
+      if (swirl) {
+        if (!swirl.__swirlCenter) {
+          swirl.geometry.computeBoundingBox();
+          swirl.__swirlCenter = swirl.geometry.boundingBox.getCenter(new THREE.Vector3());
+        }
+        const C = swirl.__swirlCenter;
+        const ang = -(g.milliSeconds() / 4) * DEG;
+        const rc = C.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), ang);
+        swirl.position.set(C.x - rc.x, C.y - rc.y, C.z - rc.z);
+        swirl.rotation.z = ang;
+      }
       if (g.exitavailable.getWorldTransform().position.distanceTo(g.mc.getWorldTransform().position) < 45) {
         g.exitlevel();
         return;

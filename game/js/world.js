@@ -319,6 +319,14 @@ export class World {
   tickParticles(dt) { for (const ps of this.particleSystems) ps.tick(dt); }
 
   render(camera) {
+    // headlight: keep the directional light shining from the camera so player-facing
+    // surfaces are lit (matches how the original reads on screen)
+    camera.three.updateMatrixWorld(true);
+    const cp = new THREE.Vector3().setFromMatrixPosition(camera.three.matrixWorld);
+    const fwd = new THREE.Vector3(0, 0, -1).transformDirection(camera.three.matrixWorld);
+    this.directional.position.copy(cp);
+    this.directional.target.position.copy(cp.clone().add(fwd.multiplyScalar(100)));
+    if (!this.directional.target.parent) this.scene.add(this.directional.target);
     this.renderer.render(this.scene, camera.three);
   }
 }

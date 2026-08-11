@@ -408,7 +408,9 @@ export class Shader {
     this._refl = tx;
     if (tx) {
       const t = tx.t;
-      if (!t.isCubeTexture && !t.userData.sphereMapped) t.userData.sphereMapped = true;
+      // three removed sphere mapping; equirectangular is the closest live approximation
+      t.mapping = THREE.EquirectangularReflectionMapping;
+      t.needsUpdate = true;
       this.mat.envMap = t;
       this.mat.combine = THREE.AddOperation;
       this.mat.reflectivity = 0.35;
