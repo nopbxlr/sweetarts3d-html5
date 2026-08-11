@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>model viewer</title>
+<style>body{margin:0;background:#223;}</style>
+<script type="importmap">{"imports":{"three":"./js/vendor/three.module.js"}}</script>
+</head>
+<body>
+<canvas id="cv" width="600" height="500"></canvas>
+<script type="module">
+import * as THREE from 'three';
+const q = new URLSearchParams(location.search);
+const name = q.get('model') || 'candy1';
+const d = await (await fetch('assets/models3d/' + name + '.json')).json();
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x223344);
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+const dl = new THREE.DirectionalLight(0xffffff, 1.2);
+dl.position.set(1, 2, 1.5);
+scene.add(dl);
+const root = new THREE.Group();
+scene.add(root);
+let bboxMin = new THREE.Vector3(1e9, 1e9, 1e9), bboxMax = new THREE.Vector3(-1e9, -1e9, -1e9);
+for (const mesh of d.meshes || []) {
+  const g = mesh.geometry;
+  if (!g || !g.groups) continue;
+  g.groups.forEach((gr, gi) => {
+    if (!gr.positions || !gr.positions.length) return;
+    const shad = (mesh.shading || [])[gi] || {};
+    const shInfo = (d.shaders || []).find(s => s.materialName === shad.materialName) || {};
+    const matInfo = (d.materials || []).find(m => m.name === shad.materialName) || {};
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(gr.positions, 3));
+    geo.setIndex(gr.faces.flat());
+    if (gr.normals && gr.normals.length === gr.positionCount) geo.setAttribute('normal', new THREE.Float32BufferAttribute(gr.normals.flat(), 3));
+    else geo.computeVertexNormals();
+    if (gr.uvs && gr.uvs.length === gr.positionCount) geo.setAttribute('uv', new THREE.Float32BufferAttribute(gr.uvs.map(t => [t[0], 1 - t[1]]).flat(), 2));
+    const mat = new THREE.MeshLambertMaterial({ color: new THREE.Color(...((matInfo.diffuse || [0.8, 0.8, 0.8]).slice(0, 3))), side: THREE.DoubleSide });
+    if (shInfo.textureName) {
+      const img = new Image();
+      img.onload = () => { const t = new THREE.Texture(img); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; };
+      img.src = 'assets/models3d/tex/' + name + '_' + shInfo.textureName;
+    }
+    const m = new THREE.Mesh(geo, mat);
+    root.add(m);
+    geo.computeBoundingBox();
+    bboxMin.min(geo.boundingBox.min); bboxMax.max(geo.boundingBox.max);
+  });
+}
+const size = bboxMax.clone().sub(bboxMin).length() || 10;
+const center = bboxMin.clone().add(bboxMax).multiplyScalar(0.5);
+const cam = new THREE.PerspectiveCamera(45, 1.2, size / 100, size * 10);
+const r = new THREE.WebGLRenderer({ canvas: document.getElementById('cv') });
+let a = 0.6;
+function frame() {
+  a += 0.004;
+  cam.position.set(center.x + Math.cos(a) * size, center.y + size * 0.55, center.z + Math.sin(a) * size);
+  cam.lookAt(center);
+  r.render(scene, cam);
+  requestAnimationFrame(frame);
+}
+frame();
+window.__stats = { meshes: root.children.length, size, center: center.toArray(), min: bboxMin.toArray(), max: bboxMax.toArray() };
+</script>
+</body>
+</html>

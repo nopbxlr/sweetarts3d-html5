@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Wonka SweeTarts 3D Game</title>
+<style>
+  html,body { margin:0; padding:0; background:#1a1a1a; height:100%; }
+  #stagewrap { position:relative; width:600px; height:500px; margin:0 auto; top:50%; transform:translateY(-50%); background:#000; overflow:hidden; }
+  #stage { position:absolute; left:0; top:0; }
+  #overlay { position:absolute; left:0; top:0; width:600px; height:500px; pointer-events:none; }
+  #ui { position:absolute; left:0; top:0; width:600px; height:500px; }
+  #ui img { position:absolute; }
+  .clickable { cursor:pointer; }
+</style>
+</head>
+<body>
+<div id="stagewrap">
+  <canvas id="stage" width="600" height="500"></canvas>
+  <div id="overlay"></div>
+  <div id="ui"></div>
+  <div id="loading" style="position:absolute;left:0;top:0;width:600px;height:500px;display:flex;align-items:center;justify-content:center;color:#3ec6dc;font:bold 24px Verdana,sans-serif;">LOADING...</div>
+</div>
+<script type="importmap">{"imports":{"three":"./js/vendor/three.module.js"}}</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
