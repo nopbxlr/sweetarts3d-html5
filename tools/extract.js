@@ -122,6 +122,9 @@ function decodeALFA(m, w, h) {
   return null;
 }
 
+// members Director draws opaque (their file alpha is stale authoring data)
+const OPAQUE_MEMBERS = new Set(['instpage1', 'instpage2', 'instpage3', 'gameoverscreen', 'basictext2']);
+
 const report = [];
 for (const mem of inv) {
   const links = {};
@@ -137,7 +140,7 @@ for (const mem of inv) {
           const img = jpeg.decode(jp, { useTArray: true, maxMemoryUsageInMB: 1024 });
           rgba = Buffer.from(img.data);
           info.w = img.width; info.h = img.height;
-          if (links.ALFA) {
+          if (links.ALFA && !OPAQUE_MEMBERS.has(safe)) {
             const alpha = decodeALFA(links.ALFA, img.width, img.height);
             if (alpha) for (let i = 0; i < img.width * img.height; i++) rgba[i * 4 + 3] = alpha[i];
           }

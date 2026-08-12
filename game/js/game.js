@@ -444,10 +444,12 @@ export class Game {
         const nsh = w.newShader('bubble');
         const ntx = w.newTexture('transcrome', '#fromCastMember', g.member('transcrome'));
         nsh.reflectionMap = ntx;
-        nsh.mat.reflectivity = 0.45;
-        nsh.diffuse = rgb(0, 90, 100);
-        nsh.emissive = rgb(35, 70, 80);
-        nsh.blend = 30; // glassy bubble
+        // Lingo: reflection layer MULTIPLIES over emissive+diffuse (opaque shiny ball)
+        nsh.mat.combine = THREE.MixOperation;
+        nsh.mat.reflectivity = 0.75;
+        nsh.diffuse = rgb(0, 255, 255);
+        nsh.emissive = rgb(128, 255, 255);
+        nsh.blend = 80;
         nm.shaderList = nsh;
         // animated soap-film: additive swirl shell just above the glass
         {
