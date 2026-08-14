@@ -146,9 +146,10 @@ export class World {
     // three r155+ physical lighting units: PI-scale so diffuse×light matches Director 1:1.
     // Director's ambient light multiplies the shader's ambient property (~0.25 gray), not
     // diffuse — scale it down accordingly or everything overexposes.
-    this.ambient = new THREE.AmbientLight(0xffffff, Math.PI * 0.25);
-    this.directional = new THREE.DirectionalLight(0xffffff, Math.PI * 0.92);
-    this.directional.position.set(0, 1000, 1000);
+    this.ambient = new THREE.AmbientLight(0xffffff, Math.PI * 0.55);
+    // reference footage: sun from above (deck evenly lit, ball brightest on top)
+    this.directional = new THREE.DirectionalLight(0xffffff, Math.PI * 0.6);
+    this.directional.position.set(0, 1000, -200);
     this.scene.add(this.ambient, this.directional);
     const self = this;
     this._lightWrappers = [null,
@@ -321,14 +322,6 @@ export class World {
   tickParticles(dt) { for (const ps of this.particleSystems) ps.tick(dt); }
 
   render(camera) {
-    // headlight: keep the directional light shining from the camera so player-facing
-    // surfaces are lit (matches how the original reads on screen)
-    camera.three.updateMatrixWorld(true);
-    const cp = new THREE.Vector3().setFromMatrixPosition(camera.three.matrixWorld);
-    const fwd = new THREE.Vector3(0, 0, -1).transformDirection(camera.three.matrixWorld);
-    this.directional.position.copy(cp);
-    this.directional.target.position.copy(cp.clone().add(fwd.multiplyScalar(100)));
-    if (!this.directional.target.parent) this.scene.add(this.directional.target);
     this.renderer.render(this.scene, camera.three);
   }
 }
