@@ -102,8 +102,9 @@ class Movie {
     // browsers unlock audio on the first real user gesture — decode everything then
     const unlock = () => {
       this.ensureSounds().then(() => {
+        const want = typeof this.musicWanted === 'string' ? this.musicWanted : 'music';
         this.musicWanted = false;
-        this.playMusic();
+        this.playMusic(want);
       });
       window.removeEventListener('pointerdown', unlock, true);
       window.removeEventListener('keydown', unlock, true);
@@ -139,12 +140,11 @@ class Movie {
         g.trackname = 'track1';
         g.initgame();
         g.initMenu();
-        // menu music (score sound channel)
-        this.playMusic();
+        this.playMusic('notes_short');
         break;
       }
       case 'restartlevel': {
-        this.playMusic();
+        this.playMusic('music');
         g.MCnum = [1, 2, 3, 4, 5, 6][g.tracknum - 1];
         g.initworld();
         break;
@@ -172,18 +172,20 @@ class Movie {
       }
       case 'instructions': case 'inst1': case 'inst2': case 'inst3': {
         this.showInstructions(label);
-        this.playMusic();
+        this.playMusic('notes_short');
         break;
       }
     }
     this.state = label;
   }
 
-  playMusic() {
-    if (!this.soundsReady || !this.sounds.assets.sounds || !this.sounds.assets.sounds.music) { this.musicWanted = true; return; }
-    if (this._musicPlaying) return;
-    this._musicPlaying = true;
-    this.sounds.channel(1).play({ member: 'music', loop: true });
+  playMusic(track) {
+    track = track || 'music';
+    if (!this.soundsReady || !this.sounds.assets.sounds || !this.sounds.assets.sounds[track]) { this.musicWanted = track; return; }
+    if (this._musicPlaying === track) return;
+    this._musicPlaying = track;
+    this.sounds.channel(1).stop();
+    this.sounds.channel(1).play({ member: track, loop: true });
   }
   stopMusic() { this._musicPlaying = false; this.musicWanted = false; this.sounds.channel(1).stop(); }
 

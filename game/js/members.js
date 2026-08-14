@@ -180,7 +180,7 @@ function setupBones(node, d) {
   node.setBoneRotation = (lingoIdx, rotV3) => {
     const i = lingoIdx - 1;
     if (i < 0 || i >= bones.length) return;
-    animRot[i].makeRotationFromEuler(new THREE.Euler(rotV3.x * Math.PI / 180, rotV3.y * Math.PI / 180, rotV3.z * Math.PI / 180, 'XYZ'));
+    animRot[i].makeRotationFromEuler(new THREE.Euler(rotV3.x * Math.PI / 180, rotV3.y * Math.PI / 180, rotV3.z * Math.PI / 180, 'ZYX'));
     animSet[i] = true;
     node._skinDirty = true;
   };

@@ -60,12 +60,12 @@ export class Transform {
   }
   get rotation() {
     const { q } = this._decompose();
-    const e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
+    const e = new THREE.Euler().setFromQuaternion(q, 'ZYX');
     return new V3(e.x / DEG, e.y / DEG, e.z / DEG);
   }
   set rotation(v) {
     const { p, s } = this._decompose();
-    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(v.x * DEG, v.y * DEG, v.z * DEG, 'XYZ'));
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(v.x * DEG, v.y * DEG, v.z * DEG, 'ZYX'));
     this.m.compose(p, q, s);
   }
   get scale() { const { s } = this._decompose(); return new V3(s.x, s.y, s.z); }
@@ -74,12 +74,12 @@ export class Transform {
     // Lingo transform().rotate(): rotates the whole transform about the origin (premultiply)
     // — the game relies on this to rotate direction vectors (rotateV, ray directions).
     if (x instanceof V3) { z = x.z; y = x.y; x = x.x; }
-    const r = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x * DEG, y * DEG, z * DEG, 'XYZ'));
+    const r = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x * DEG, y * DEG, z * DEG, 'ZYX'));
     this.m.premultiply(r);
   }
   preRotate(x, y, z) {
     if (x instanceof V3) { z = x.z; y = x.y; x = x.x; }
-    const r = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x * DEG, y * DEG, z * DEG, 'XYZ'));
+    const r = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x * DEG, y * DEG, z * DEG, 'ZYX'));
     const t = new THREE.Vector3(this.m.elements[12], this.m.elements[13], this.m.elements[14]);
     this.m.elements[12] = 0; this.m.elements[13] = 0; this.m.elements[14] = 0;
     this.m.premultiply(r);
@@ -182,7 +182,7 @@ export class Node {
   }
   rotate(x, y, z, mode) {
     if (x instanceof V3) { mode = y; z = x.z; y = x.y; x = x.x; }
-    const r = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x * DEG, y * DEG, z * DEG, 'XYZ'));
+    const r = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x * DEG, y * DEG, z * DEG, 'ZYX'));
     this.o.matrix.multiply(r); // #self
     this._sync();
   }

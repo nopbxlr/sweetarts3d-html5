@@ -443,30 +443,15 @@ export class Game {
         nm.translate(0, 20, 0);
         const nsh = w.newShader('bubble');
         const ntx = w.newTexture('transcrome', '#fromCastMember', g.member('transcrome'));
+        // reference (original gameplay footage): near-invisible interior, a few soft
+        // white highlight blobs that drift with the view
         nsh.reflectionMap = ntx;
-        // Lingo: reflection layer MULTIPLIES over emissive+diffuse (opaque shiny ball)
-        nsh.mat.combine = THREE.MixOperation;
-        nsh.mat.reflectivity = 0.75;
-        nsh.diffuse = rgb(0, 255, 255);
-        nsh.emissive = rgb(128, 255, 255);
-        nsh.blend = 80;
+        nsh.mat.combine = THREE.AddOperation;
+        nsh.mat.reflectivity = 0.55;
+        nsh.diffuse = rgb(0, 40, 45);
+        nsh.emissive = rgb(14, 28, 30);
+        nsh.blend = 14;
         nm.shaderList = nsh;
-        // animated soap-film: additive swirl shell just above the glass
-        {
-          const base = nm.o.children.find(c => c.isMesh);
-          if (base) {
-            const filmMat = new THREE.MeshBasicMaterial({
-              map: ntx.t.clone(), transparent: true, blending: THREE.AdditiveBlending,
-              depthWrite: false, opacity: 0.32
-            });
-            filmMat.map.needsUpdate = true;
-            filmMat.map.wrapS = filmMat.map.wrapT = THREE.RepeatWrapping;
-            const film = new THREE.Mesh(base.geometry, filmMat);
-            film.scale.setScalar(1.015);
-            nm.o.add(film);
-            g.__bubbleFilm = filmMat;
-          }
-        }
         g.m_Model = nm;
         g.addinker(nm);
         mc.addChild(nm, '#preserveWorld');
@@ -492,15 +477,23 @@ export class Game {
   }
 
   addinker(amodel) {
-    // Director inker modifier: white silhouette outline. Backface-expanded shell.
+    // Director inker modifier: white silhouette line. Fresnel rim (works on transparent models
+    // — a backface shell would show as a solid disc through them).
+    const rimMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false,
+      vertexShader: `varying vec3 vN; varying vec3 vV;
+        void main(){ vN = normalMatrix * normal; vec4 mv = modelViewMatrix * vec4(position,1.0);
+        vV = -mv.xyz; gl_Position = projectionMatrix * mv; }`,
+      fragmentShader: `varying vec3 vN; varying vec3 vV;
+        void main(){ float f = abs(dot(normalize(vN), normalize(vV)));
+        float a = 1.0 - smoothstep(0.04, 0.30, f);
+        gl_FragColor = vec4(1.0, 1.0, 1.0, a); }`
+    });
     for (const c of [...amodel.o.children]) {
       if (!c.isMesh) continue;
-      const outline = new THREE.Mesh(c.geometry, new THREE.MeshBasicMaterial({
-        color: 0xffffff, side: THREE.BackSide
-      }));
-      outline.scale.setScalar(1.07);
-      outline.renderOrder = (c.renderOrder || 0) - 1;
-      amodel.o.add(outline);
+      const rim = new THREE.Mesh(c.geometry, rimMat);
+      rim.renderOrder = (c.renderOrder || 0) + 1;
+      amodel.o.add(rim);
     }
   }
 
