@@ -308,11 +308,9 @@ export class Member3D {
           for (const f of gr.faces) idx.push(f[0], f[1], f[2]);
           geo.setAttribute('position', new THREE.Float32BufferAttribute(gr.positions, 3));
           geo.setIndex(idx);
-          if (gr.normals && gr.normals.length === gr.positionCount) {
-            const nn = [];
-            for (const n of gr.normals) nn.push(n[0], n[1], n[2]);
-            geo.setAttribute('normal', new THREE.Float32BufferAttribute(nn, 3));
-          } else geo.computeVertexNormals();
+          // decoded W3D normals are unreliable (validated bad on known-sphere geometry);
+          // recompute from faces — vertex splits in the meshes keep intended hard edges
+          geo.computeVertexNormals();
           if (gr.uvs && gr.uvs.length === gr.positionCount) {
             const uu = [];
             for (const t of gr.uvs) uu.push(t[0], 1 - t[1]);
