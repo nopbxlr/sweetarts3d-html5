@@ -146,10 +146,13 @@ export class World {
     // three r155+ physical lighting units: PI-scale so diffuse×light matches Director 1:1.
     // Director's ambient light multiplies the shader's ambient property (~0.25 gray), not
     // diffuse — scale it down accordingly or everything overexposes.
-    this.ambient = new THREE.AmbientLight(0xffffff, Math.PI * 0.55);
+    // Director ambient light drives the material AMBIENT channel (~0.25 gray), giving a
+    // ~6% floor — undersides go near-black exactly like the original footage
+    this.ambient = new THREE.AmbientLight(0xffffff, Math.PI * 0.25);
     // reference footage: sun from above (deck evenly lit, ball brightest on top)
-    this.directional = new THREE.DirectionalLight(0xffffff, Math.PI * 0.6);
-    this.directional.position.set(0, 1000, -200);
+    // fitted to original footage: deck tops ~full, spawn-facing walls ~0.55, undersides dark
+    this.directional = new THREE.DirectionalLight(0xffffff, Math.PI);
+    this.directional.position.set(0, 800, -550);
     this.scene.add(this.ambient, this.directional);
     const self = this;
     this._lightWrappers = [null,
